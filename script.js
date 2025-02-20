@@ -11,9 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let matchedPairs = 0;
     let score = 0;
 
+    // Default images for A-H with corresponding illustrations
     const defaultImages = [
-        'images/image1.jpg', 'images/image2.jpg', 'images/image3.jpg', 'images/image4.jpg',
-        'images/image5.jpg', 'images/image6.jpg', 'images/image7.jpg', 'images/image8.jpg'
+        'images/a-apple.jpg',  // A with apple
+        'images/b-butterfly.jpg', // B with butterfly
+        'images/c-car.jpg',    // C with car
+        'images/d-dog.jpg',    // D with dog
+        'images/e-elephant.jpg', // E with elephant
+        'images/f-fish.jpg',   // F with fish
+        'images/g-giraffe.jpg', // G with giraffe
+        'images/h-house.jpg'   // H with house
     ];
 
     function createCard(image) {
@@ -44,7 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreDisplay.textContent = `ניקוד: ${score}`;
         victoryMessage.classList.add('hidden');
 
-        const gameImages = [...images, ...images]; // Duplicate for pairs
+        const gameImages = [...images, ...images]; // 16 cards (8 pairs)
+        if (gameImages.length !== 16) {
+            console.error('Expected 16 cards for a 4x4 grid');
+            return;
+        }
         shuffle(gameImages);
 
         gameImages.forEach(image => {
@@ -97,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     uploadImages.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-        if (files.length > 8) {
-            alert('אנא העלה עד 8 תמונות בלבד');
+        if (files.length !== 8) {
+            alert('אנא העלה בדיוק 8 תמונות עבור רשת 4x4');
             return;
         }
         const readerPromises = files.map(file => {
