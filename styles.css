@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f8ff;
+    direction: rtl;
+}
+
+header {
+    margin: 20px 0;
+}
+
+h1 {
+    color: #ff4500;
+    font-size: 2.5em;
+}
+
+#score {
+    font-size: 1.5em;
+    color: #4682b4;
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+.card {
+    width: 100px;
+    height: 100px;
+    background-color: #32cd32;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+}
+
+.card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card .front, .card .back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+}
+
+.card .front {
+    background-color: #32cd32;
+}
+
+.card .back {
+    transform: rotateY(180deg);
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#controls {
+    margin: 20px;
+}
+
+button, .upload-btn {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #ff69b4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 10px;
+}
+
+button:hover, .upload-btn:hover {
+    background-color: #ff1493;
+}
+
+#victory-message {
+    font-size: 2em;
+    color: #ff4500;
+    margin-top: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .card {
+        width: 80px;
+        height: 80px;
+        font-size: 1em;
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+}
