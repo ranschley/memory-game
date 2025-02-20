@@ -3,9 +3,9 @@ body {
     text-align: center;
     background-color: #f0f8ff;
     direction: rtl;
-    margin: 0; /* Remove default margin */
-    padding: 10px; /* Add some padding for small screens */
-    min-height: 100vh; /* Ensure body takes full height */
+    margin: 0;
+    padding: 10px;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -14,17 +14,17 @@ body {
 header {
     margin: 20px 0;
     width: 100%;
-    max-width: 800px; /* Limit header width */
+    max-width: 800px;
 }
 
 h1 {
     color: #ff4500;
-    font-size: clamp(1.8em, 5vw, 2.5em); /* Responsive font size */
+    font-size: clamp(1.8em, 5vw, 2.5em);
     margin: 0;
 }
 
 #score {
-    font-size: clamp(1.2em, 4vw, 1.5em); /* Responsive score size */
+    font-size: clamp(1.2em, 4vw, 1.5em);
     color: #4682b4;
     margin-top: 10px;
 }
@@ -32,26 +32,26 @@ h1 {
 #game-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 columns */
-    grid-template-rows: repeat(4, 1fr);   /* 4 rows */
+    grid-template-rows: none; /* Remove fixed rows, let height adjust */
     gap: 10px;
     width: 100%;
-    max-width: 500px; /* Base max-width for computers */
+    max-width: 500px; /* Base size for computers */
     margin: 20px auto;
     padding: 10px;
-    box-sizing: border-box; /* Include padding in width */
+    box-sizing: border-box;
 }
 
 .card {
     position: relative;
-    width: 100%; /* Fit grid cell */
-    padding-bottom: 100%; /* Square aspect ratio */
+    width: 100%; /* Full width of grid cell */
+    aspect-ratio: 1 / 1; /* Force square shape */
     background-color: #32cd32;
     color: white;
-    font-size: clamp(0.8em, 2.5vw, 1.2em); /* Responsive text */
+    font-size: clamp(0.8em, 2.5vw, 1.2em);
     cursor: pointer;
     transform-style: preserve-3d;
     transition: transform 0.5s;
-    overflow: hidden; /* Prevent content overflow */
+    overflow: hidden;
 }
 
 .card.flipped {
@@ -81,21 +81,21 @@ h1 {
 .card img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Ensure image fills the card */
 }
 
 #controls {
     margin: 20px 0;
     width: 100%;
-    max-width: 800px; /* Match header width */
+    max-width: 800px;
     display: flex;
     justify-content: center;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
 }
 
 button, .upload-btn {
     padding: 10px 20px;
-    font-size: clamp(1em, 3vw, 1.2em); /* Responsive button text */
+    font-size: clamp(1em, 3vw, 1.2em);
     background-color: #ff69b4;
     color: white;
     border: none;
@@ -108,7 +108,7 @@ button:hover, .upload-btn:hover {
 }
 
 #victory-message {
-    font-size: clamp(1.5em, 4vw, 2em); /* Responsive victory text */
+    font-size: clamp(1.5em, 4vw, 2em);
     color: #ff4500;
     margin-top: 20px;
 }
@@ -120,30 +120,29 @@ button:hover, .upload-btn:hover {
 /* Responsive adjustments */
 @media (max-width: 768px) { /* Tablets */
     #game-board {
-        max-width: 400px; /* Slightly smaller for tablets */
+        max-width: 400px;
     }
 }
 
 @media (max-width: 480px) { /* Phones */
     #game-board {
-        max-width: 300px; /* Compact for phones */
-        gap: 5px; /* Smaller gap */
+        max-width: 300px;
+        gap: 5px;
     }
     header {
         margin: 10px 0;
     }
     #controls {
-        flex-direction: column; /* Stack buttons on small screens */
+        flex-direction: column;
         gap: 10px;
     }
     button, .upload-btn {
-        width: 100%; /* Full width on phones */
-        max-width: 200px; /* Limit button width */
+        width: 100%;
+        max-width: 200px;
     }
 }
 
-/* Ensure content doesn’t overflow on very small screens */
-@media (max-width: 320px) {
+@media (max-width: 320px) { /* Very small phones */
     #game-board {
         max-width: 250px;
     }
