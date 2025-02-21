@@ -82,6 +82,7 @@ h1 {
     height: 100%;
     object-fit: cover; /* Crop to fill the square */
     object-position: center; /* Center the image for cropping */
+    border: 1px solid red; /*test
 }
 
 #controls {
