@@ -11,16 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let matchedPairs = 0;
     let score = 0;
 
-    // Default images for A-H with corresponding illustrations
     const defaultImages = [
-        '/memory-game/images/image1.jpg',  // A with apple
-        '/memory-game/images/image2.jpg', // B with butterfly
-        '/memory-game/images/image3.jpg',    // C with car
-        '/memory-game/images/image4.jpg',    // D with dog
-        '/memory-game/images/image5.jpg', // E with elephant
-        '/memory-game/images/image6.jpg',   // F with fish
-        '/memory-game/images/image7.jpg', // G with giraffe
-        '/memory-game/images/image8.jpg'   // H with house
+        '/memory-game/images/image1.jpg',
+        '/memory-game/images/image2.jpg',
+        '/memory-game/images/image3.jpg',
+        '/memory-game/images/image4.jpg',
+        '/memory-game/images/image5.jpg',
+        '/memory-game/images/image6.jpg',
+        '/memory-game/images/image7.jpg',
+        '/memory-game/images/image8.jpg'
     ];
 
     function createCard(image) {
@@ -30,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="front">מיתרים ונהנים</div>
             <div class="back"><img src="${image}" alt="card image"></div>
         `;
+        const img = card.querySelector('img');
+        img.onerror = () => console.error(`Failed to load image: ${image}`);
+        img.onload = () => console.log(`Image loaded successfully: ${image}`);
+        console.log(`Created card with image: ${image}`); // Log every card creation
         card.addEventListener('click', () => flipCard(card));
         return card;
     }
@@ -51,12 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreDisplay.textContent = `ניקוד: ${score}`;
         victoryMessage.classList.add('hidden');
 
-        const gameImages = [...images, ...images]; // 16 cards (8 pairs)
+        const gameImages = [...images, ...images];
         if (gameImages.length !== 16) {
-            console.error('Expected 16 cards for a 4x4 grid');
+            console.error('Expected 16 cards for a 4x4 grid, got:', gameImages.length);
             return;
         }
         shuffle(gameImages);
+        console.log('Shuffled images:', gameImages); // Log the image array
 
         gameImages.forEach(image => {
             const card = createCard(image);
@@ -69,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
             card.classList.add('flipped');
             flippedCards.push(card);
+            console.log('Flipped card with image:', card.querySelector('img').src); // Log flipped image
 
             if (flippedCards.length === 2) {
                 checkMatch();
@@ -98,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card1.classList.remove('flipped');
                 card2.classList.remove('flipped');
                 flippedCards = [];
-                score = Math.max(0, score - 2); // Deduct points for mismatch
+                score = Math.max(0, score - 2);
                 scoreDisplay.textContent = `ניקוד: ${score}`;
             }, 1000);
         }
@@ -113,18 +118,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const readerPromises = files.map(file => {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
+                reader.onload = () => {
+                    console.log(`Uploaded image processed: ${file.name}`);
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    console.error(`Failed to read file: ${file.name}`);
+                    reject(new Error(`Failed to read ${file.name}`));
+                };
                 reader.readAsDataURL(file);
             });
         });
 
-        Promise.all(readerPromises).then(images => {
-            startGame(images);
-        });
+        Promise.all(readerPromises)
+            .then(images => {
+                console.log('All uploaded images:', images);
+                startGame(images);
+            })
+            .catch(error => console.error('Error loading images:', error));
     });
 
-    // Start the game with default images
     startGame();
 });
