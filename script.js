@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Default images for A-H with corresponding illustrations
     const defaultImages = [
-        'images/image1.jpg',  // A with apple
-        'images/image2.jpg', // B with butterfly
-        'images/image3.jpg',    // C with car
-        'images/image4.jpg',    // D with dog
-        'images/image5.jpg', // E with elephant
-        'images/image6.jpg',   // F with fish
-        'images/image7.jpg', // G with giraffe
-        'images/image8.jpg'   // H with house
+        '/memory-game/images/image1.jpg',  // A with apple
+        '/memory-game/images/image2.jpg', // B with butterfly
+        '/memory-game/images/image3.jpg',    // C with car
+        '/memory-game/images/image4.jpg',    // D with dog
+        '/memory-game/images/image5.jpg', // E with elephant
+        '/memory-game/images/image6.jpg',   // F with fish
+        '/memory-game/images/image7.jpg', // G with giraffe
+        '/memory-game/images/image8.jpg'   // H with house
     ];
 
     function createCard(image) {
