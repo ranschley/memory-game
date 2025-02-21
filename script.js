@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Default images for A-H with corresponding illustrations
     const defaultImages = [
-        'images/a-apple.jpg',  // A with apple
-        'images/b-butterfly.jpg', // B with butterfly
-        'images/c-car.jpg',    // C with car
-        'images/d-dog.jpg',    // D with dog
-        'images/e-elephant.jpg', // E with elephant
-        'images/f-fish.jpg',   // F with fish
-        'images/g-giraffe.jpg', // G with giraffe
-        'images/h-house.jpg'   // H with house
+        'images/image1.jpg',  // A with apple
+        'images/image2.jpg', // B with butterfly
+        'images/image3.jpg',    // C with car
+        'images/image4.jpg',    // D with dog
+        'images/image5.jpg', // E with elephant
+        'images/image6.jpg',   // F with fish
+        'images/image7.jpg', // G with giraffe
+        'images/image8.jpg'   // H with house
     ];
 
     function createCard(image) {
