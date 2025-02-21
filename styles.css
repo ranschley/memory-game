@@ -53,8 +53,15 @@ h1 {
     overflow: hidden;
 }
 
-.card.flipped {
+/* .card.flipped {
     transform: rotateY(180deg);
+} */
+
+.card.flipped {
+    transform: none !important;
+}
+.card .back {
+    transform: none !important;
 }
 
 .card .front, .card .back {
@@ -74,10 +81,10 @@ h1 {
     z-index: 2; /* Ensure front is above back when not flipped */
 }
 
-.card .back {
+/*.card .back {
     transform: rotateY(180deg); /* Back starts rotated */
     z-index: 1; /* Back below front initially */
-}
+}*/
 
 .card.flipped .back {
     z-index: 3; /* Bring back to top when flipped */
