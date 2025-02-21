@@ -84,12 +84,16 @@ h1 {
 }
 
 .card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    border: 1px solid red; /* Debugging border */
-}
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border: 5px solid red !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    background-color: yellow !important; /* Fallback to see if img renders */
 
 #controls {
     margin: 20px 0;
