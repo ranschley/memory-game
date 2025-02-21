@@ -31,11 +31,10 @@ h1 {
 
 #game-board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 columns */
-    grid-template-rows: none; /* Remove fixed rows, let height adjust */
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     width: 100%;
-    max-width: 500px; /* Base size for computers */
+    max-width: 500px;
     margin: 20px auto;
     padding: 10px;
     box-sizing: border-box;
@@ -43,15 +42,14 @@ h1 {
 
 .card {
     position: relative;
-    width: 100%; /* Full width of grid cell */
-    aspect-ratio: 1 / 1; /* Force square shape */
+    aspect-ratio: 1;
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
     background-color: #32cd32;
-    color: white;
-    font-size: clamp(0.8em, 2.5vw, 1.2em);
     cursor: pointer;
     transform-style: preserve-3d;
     transition: transform 0.5s;
-    overflow: hidden;
 }
 
 .card.flipped {
@@ -68,20 +66,21 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.card .front {
+    font-size: 2em;
+    color: white;
     background-color: #32cd32;
+    border-radius: 10px;
 }
 
 .card .back {
+    background-color: white;
     transform: rotateY(180deg);
 }
 
 .card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Ensure image fills the card */
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
 }
 
 #controls {
@@ -118,31 +117,35 @@ button:hover, .upload-btn:hover {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) { /* Tablets */
+@media (max-width: 768px) {
     #game-board {
         max-width: 400px;
     }
 }
 
-@media (max-width: 480px) { /* Phones */
+@media (max-width: 480px) {
     #game-board {
         max-width: 300px;
         gap: 5px;
     }
+
     header {
         margin: 10px 0;
     }
+
     #controls {
         flex-direction: column;
+        align-items: center;
         gap: 10px;
     }
+
     button, .upload-btn {
         width: 100%;
         max-width: 200px;
     }
 }
 
-@media (max-width: 320px) { /* Very small phones */
+@media (max-width: 320px) {
     #game-board {
         max-width: 250px;
     }

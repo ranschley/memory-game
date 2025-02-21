@@ -9,18 +9,23 @@
 <body>
     <header>
         <h1>משחק הזיכרון של בית ספר מיתרים</h1>
-        <div id="score">ניקוד: 0</div>
+        <div id="score">ניקוד: <span id="score-value">0</span></div>
     </header>
-    <main>
-        <div id="game-board"></div>
-        <div id="controls">
-            <button id="new-game">משחק חדש</button>
-            <label for="upload-images" class="upload-btn">העלה תמונות...</label>
-            <input type="file" id="upload-images" accept="image/*" multiple style="display: none;">
-        </div>
-    </main>
-    <div id="victory-message" class="hidden">ניצחון! ניקוד סופי: <span id="final-score"></span></div>
+
+    <div id="controls">
+        <button id="new-game-btn">משחק חדש</button>
+        <label class="upload-btn">
+            העלה תמונות...
+            <input type="file" id="image-upload" multiple accept="image/*" style="display: none;">
+        </label>
+    </div>
+
+    <div id="game-board"></div>
+
+    <div id="victory-message" class="hidden">
+        כל הכבוד! ניצחת את המשחק!
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
-
