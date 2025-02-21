@@ -23,19 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     function createCard(image) {
-        const card = document.createElement('div');
-        card.classList.add('card');
-        card.innerHTML = `
-            <div class="front">מיתרים ונהנים</div>
-            <div class="back"><img src="${image}" alt="card image"></div>
-        `;
-        const img = card.querySelector('img');
-        img.onerror = () => console.error(`Failed to load image: ${image}`);
-        img.onload = () => console.log(`Image loaded successfully: ${image}`);
-        console.log(`Created card with image: ${image}`); // Log every card creation
-        card.addEventListener('click', () => flipCard(card));
-        return card;
-    }
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.innerHTML = `
+        <div class="front">מיתרים ונהנים</div>
+        <div class="back"><img src="${image}" alt="card image"></div>
+    `;
+    const img = card.querySelector('img');
+    img.onerror = () => console.error(`Failed to load image: ${image}`);
+    img.onload = () => {
+        console.log(`Image loaded: ${image}, naturalWidth: ${img.naturalWidth}, naturalHeight: ${img.naturalHeight}, clientWidth: ${img.clientWidth}, clientHeight: ${img.clientHeight}`);
+    };
+    console.log(`Created card with image: ${image}`);
+    card.addEventListener('click', () => flipCard(card));
+    return card;
+}
 
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -70,16 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function flipCard(card) {
-        if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
-            card.classList.add('flipped');
-            flippedCards.push(card);
-            console.log('Flipped card with image:', card.querySelector('img').src); // Log flipped image
+    if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
+        card.classList.add('flipped');
+        const img = card.querySelector('img');
+        console.log('Flipped card:', { src: img.src, width: img.clientWidth, height: img.clientHeight });
+        flippedCards.push(card);
 
-            if (flippedCards.length === 2) {
-                checkMatch();
-            }
+        if (flippedCards.length === 2) {
+            checkMatch();
         }
     }
+}
 
     function checkMatch() {
         const [card1, card2] = flippedCards;
