@@ -32,7 +32,6 @@ h1 {
 #game-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 columns */
-    grid-template-rows: none; /* Remove fixed rows, let height adjust */
     gap: 10px;
     width: 100%;
     max-width: 500px; /* Base size for computers */
@@ -81,7 +80,8 @@ h1 {
 .card img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensure image fills the card */
+    object-fit: cover; /* Crop to fill the square */
+    object-position: center; /* Center the image for cropping */
 }
 
 #controls {
