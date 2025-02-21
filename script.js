@@ -12,20 +12,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
 
     const defaultImages = [
-        'images/image1.jpg', 'images/image2.jpg', 'images/image3.jpg', 'images/image4.jpg',
-        'images/image5.jpg', 'images/image6.jpg', 'images/image7.jpg', 'images/image8.jpg'
+        '/memory-game/images/image1.jpg',
+        '/memory-game/images/image2.jpg',
+        '/memory-game/images/image3.jpg',
+        '/memory-game/images/image4.jpg',
+        '/memory-game/images/image5.jpg',
+        '/memory-game/images/image6.jpg',
+        '/memory-game/images/image7.jpg',
+        '/memory-game/images/image8.jpg'
     ];
 
     function createCard(image) {
-        const card = document.createElement('div');
-        card.classList.add('card');
-        card.innerHTML = `
-            <div class="front">מיתרים ונהנים</div>
-            <div class="back"><img src="${image}" alt="card image"></div>
-        `;
-        card.addEventListener('click', () => flipCard(card));
-        return card;
-    }
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.innerHTML = `
+        <div class="front">מיתרים ונהנים</div>
+        <div class="back"><img src="${image}" alt="card image"></div>
+    `;
+    const img = card.querySelector('img');
+    img.onerror = () => console.error(`Failed to load image: ${image}`);
+    img.onload = () => {
+        console.log(`Image loaded: ${image}, naturalWidth: ${img.naturalWidth}, naturalHeight: ${img.naturalHeight}, clientWidth: ${img.clientWidth}, clientHeight: ${img.clientHeight}`);
+    };
+    console.log(`Created card with image: ${image}`);
+    card.addEventListener('click', () => flipCard(card));
+    return card;
+}
 
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -44,8 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreDisplay.textContent = `ניקוד: ${score}`;
         victoryMessage.classList.add('hidden');
 
-        const gameImages = [...images, ...images]; // Duplicate for pairs
+        const gameImages = [...images, ...images];
+        if (gameImages.length !== 16) {
+            console.error('Expected 16 cards for a 4x4 grid, got:', gameImages.length);
+            return;
+        }
         shuffle(gameImages);
+        console.log('Shuffled images:', gameImages); // Log the image array
 
         gameImages.forEach(image => {
             const card = createCard(image);
@@ -55,15 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function flipCard(card) {
-        if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
-            card.classList.add('flipped');
-            flippedCards.push(card);
+    if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
+        card.classList.add('flipped');
+        const img = card.querySelector('img');
+        console.log('Flipped card:', { src: img.src, width: img.clientWidth, height: img.clientHeight });
+        flippedCards.push(card);
 
-            if (flippedCards.length === 2) {
-                checkMatch();
-            }
+        if (flippedCards.length === 2) {
+            checkMatch();
         }
     }
+}
 
     function checkMatch() {
         const [card1, card2] = flippedCards;
@@ -87,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card1.classList.remove('flipped');
                 card2.classList.remove('flipped');
                 flippedCards = [];
-                score = Math.max(0, score - 2); // Deduct points for mismatch
+                score = Math.max(0, score - 2);
                 scoreDisplay.textContent = `ניקוד: ${score}`;
             }, 1000);
         }
@@ -97,23 +116,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     uploadImages.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-        if (files.length > 8) {
-            alert('אנא העלה עד 8 תמונות בלבד');
+        if (files.length !== 8) {
+            alert('אנא העלה בדיוק 8 תמונות עבור רשת 4x4');
             return;
         }
         const readerPromises = files.map(file => {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
+                reader.onload = () => {
+                    console.log(`Uploaded image processed: ${file.name}`);
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    console.error(`Failed to read file: ${file.name}`);
+                    reject(new Error(`Failed to read ${file.name}`));
+                };
                 reader.readAsDataURL(file);
             });
         });
 
-        Promise.all(readerPromises).then(images => {
-            startGame(images);
-        });
+        Promise.all(readerPromises)
+            .then(images => {
+                console.log('All uploaded images:', images);
+                startGame(images);
+            })
+            .catch(error => console.error('Error loading images:', error));
     });
 
-    // Start the game with default images
     startGame();
 });
