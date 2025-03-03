@@ -267,7 +267,7 @@
         </div>
     </div>
 
-    <input type="file" id="file-input" multiple class="file-input">
+    <input type="file" id="file-input" multiple class="file-input" accept="image/*">
 
     <script>
         // Game variables
@@ -280,8 +280,8 @@
         let gameMode = 1; // Default: regular memory game
         let pairsCount = 8; // Default: 8 pairs (16 cards)
         let defaultImages = [
-            'img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg',
-            'img/5.jpg', 'img/6.jpg', 'img/7.jpg', 'img/8.jpg'
+            'images/1.jpg', 'images/2.jpg', 'images/3.jpg', 'images/4.jpg',
+            'images/5.jpg', 'images/6.jpg', 'images/7.jpg', 'images/8.jpg'
         ];
 
         // DOM elements
@@ -342,6 +342,11 @@
                     const img = document.createElement('img');
                     img.src = data.content;
                     img.alt = "Card Image";
+                    // Add an error handler to show when images fail to load
+                    img.onerror = function() {
+                        console.error("Failed to load image:", data.content);
+                        this.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ff0000' width='100' height='100'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='14' x='10' y='50'%3EImage Error%3C/text%3E%3C/svg%3E";
+                    };
                     cardBack.appendChild(img);
                 } else if (data.type === 'text') {
                     const textDiv = document.createElement('div');
@@ -353,7 +358,7 @@
                 card.appendChild(cardFront);
                 card.appendChild(cardBack);
                 card.dataset.cardId = data.id;
-                
+
                 card.addEventListener('click', flipCard);
                 cardsContainer.appendChild(card);
                 cards.push(card);
@@ -388,7 +393,7 @@
                 disableCards();
                 updateScore(10); // Increase score by 10 for a match
                 matchedPairs++;
-                
+
                 // Check for game completion
                 if (matchedPairs === pairsCount) {
                     setTimeout(() => {
@@ -411,7 +416,7 @@
         function disableCards() {
             firstCard.classList.add('matched');
             secondCard.classList.add('matched');
-            
+
             resetBoard();
         }
 
@@ -422,7 +427,7 @@
             setTimeout(() => {
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
-                
+
                 resetBoard();
             }, 1000);
         }
@@ -452,10 +457,41 @@
             victoryMessage.innerHTML = `<div class="victory">ניצחון! סיימת עם ${score} נקודות</div>`;
         }
 
-        // Generate default card data (using the predefined images)
+        // Check if default images exist and load them
+        function checkDefaultImagesExist() {
+            let allExist = true;
+            const promises = defaultImages.map(src => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = src;
+                });
+            });
+
+            return Promise.all(promises).then(results => {
+                return results.every(exists => exists);
+            });
+        }
+
+        // Generate default card data
         function generateDefaultCardData() {
             let cardData = [];
-            
+
+            // First check if default images exist
+            checkDefaultImagesExist().then(imagesExist => {
+                if (!imagesExist) {
+                    console.warn("Default images not found. Using fallback placeholder images.");
+
+                    // Create placeholder images if default images don't exist
+                    defaultImages = Array(8).fill().map((_, i) =>
+                        `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%234169e1' width='100' height='100'/%3E%3Ctext fill='%23ffffff' font-family='Arial' font-size='14' x='35' y='50'%3E${i+1}%3C/text%3E%3C/svg%3E`
+                    );
+
+                    recreateCards();
+                }
+            });
+
             defaultImages.forEach((img, index) => {
                 // Create two cards with the same ID (for matching)
                 cardData.push({
@@ -463,73 +499,79 @@
                     type: 'image',
                     content: img
                 });
-                
+
                 cardData.push({
                     id: `pair-${index}`,
                     type: 'image',
                     content: img
                 });
             });
-            
+
             return shuffle(cardData);
+        }
+
+        // Recreate cards with placeholder images if default images don't exist
+        function recreateCards() {
+            resetGame();
+            createCards(generateDefaultCardData());
         }
 
         // Process uploaded files based on game mode
         function processUploadedFiles(files) {
             resetGame();
-            
+
             if (gameMode === 1) {
                 // Regular memory game: match identical images
                 if (files.length < 8) {
                     showError("יש להעלות לפחות 8 תמונות למצב זה");
                     return;
                 }
-                
+
                 const selectedFiles = Array.from(files).slice(0, 8);
                 const cardData = [];
-                
+
                 selectedFiles.forEach((file, index) => {
                     const imageUrl = URL.createObjectURL(file);
-                    
+
                     // Create two cards with the same ID and image
                     cardData.push({
                         id: `pair-${index}`,
                         type: 'image',
                         content: imageUrl
                     });
-                    
+
                     cardData.push({
                         id: `pair-${index}`,
                         type: 'image',
                         content: imageUrl
                     });
                 });
-                
+
                 pairsCount = selectedFiles.length;
                 createCards(shuffle(cardData));
-                
+
             } else if (gameMode === 2) {
                 // Match different images: pair images with '1' and '2' suffix
                 if (files.length < 16) {
                     showError("יש להעלות לפחות 16 תמונות למצב זה");
                     return;
                 }
-                
+
                 const fileMap = new Map();
                 let validPairs = true;
-                
+
                 // Organize files by base name
                 Array.from(files).forEach(file => {
                     const fileName = file.name.split('.')[0]; // Get name without extension
-                    
+
                     // Check if filename ends with 1 or 2
                     if (fileName.endsWith('1') || fileName.endsWith('2')) {
                         const baseName = fileName.substring(0, fileName.length - 1);
-                        
+
                         if (!fileMap.has(baseName)) {
                             fileMap.set(baseName, []);
                         }
-                        
+
                         fileMap.get(baseName).push({
                             suffix: fileName.charAt(fileName.length - 1),
                             file: file
@@ -538,65 +580,65 @@
                         validPairs = false;
                     }
                 });
-                
+
                 // Validate pairs
                 let validBaseNames = [];
                 for (const [baseName, fileInfos] of fileMap.entries()) {
-                    if (fileInfos.length === 2 && 
-                        fileInfos.some(info => info.suffix === '1') && 
+                    if (fileInfos.length === 2 &&
+                        fileInfos.some(info => info.suffix === '1') &&
                         fileInfos.some(info => info.suffix === '2')) {
                         validBaseNames.push(baseName);
                     }
                 }
-                
+
                 if (!validPairs || validBaseNames.length < 8) {
                     showError("יש להעלות לפחות 8 זוגות של תמונות, כל זוג עם הסיומות '1' ו-'2'");
                     return;
                 }
-                
+
                 // Create card data
                 const cardData = [];
                 validBaseNames.slice(0, 8).forEach((baseName, index) => {
                     const file1 = fileMap.get(baseName).find(info => info.suffix === '1').file;
                     const file2 = fileMap.get(baseName).find(info => info.suffix === '2').file;
-                    
+
                     cardData.push({
                         id: `pair-${index}`,
                         type: 'image',
                         content: URL.createObjectURL(file1)
                     });
-                    
+
                     cardData.push({
                         id: `pair-${index}`,
                         type: 'image',
                         content: URL.createObjectURL(file2)
                     });
                 });
-                
+
                 pairsCount = validBaseNames.length;
                 createCards(shuffle(cardData));
-                
+
             } else if (gameMode === 3) {
                 // Match image to text: pair image with its filename
                 if (files.length < 8) {
                     showError("יש להעלות לפחות 8 תמונות למצב זה");
                     return;
                 }
-                
+
                 const selectedFiles = Array.from(files).slice(0, 8);
                 const cardData = [];
-                
+
                 selectedFiles.forEach((file, index) => {
                     const imageUrl = URL.createObjectURL(file);
                     const fileName = file.name.split('.')[0]; // Get name without extension
-                    
+
                     // Card with image
                     cardData.push({
                         id: `pair-${index}`,
                         type: 'image',
                         content: imageUrl
                     });
-                    
+
                     // Card with text
                     cardData.push({
                         id: `pair-${index}`,
@@ -604,7 +646,7 @@
                         content: fileName
                     });
                 });
-                
+
                 pairsCount = selectedFiles.length;
                 createCards(shuffle(cardData));
             }
@@ -651,7 +693,7 @@
                     break;
                 }
             }
-            
+
             fileInput.click();
             modeOverlay.classList.remove('active');
         });
@@ -661,6 +703,13 @@
                 processUploadedFiles(event.target.files);
             }
         });
+
+        // Log any image loading errors to help debugging
+        window.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG') {
+                console.error('Image loading error:', e.target.src);
+            }
+        }, true);
 
         // Initialize game on page load
         initGame();
