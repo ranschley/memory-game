@@ -1,213 +1,155 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Elements
-    const gameBoard = document.getElementById('game-board');
-    const newGameBtn = document.getElementById('new-game');
-    const uploadImagesBtn = document.getElementById('upload-images');
-    const scoreElement = document.getElementById('score');
-    const finalScoreElement = document.getElementById('final-score');
-    const modeSelectModal = document.getElementById('mode-select-modal');
-    const victoryModal = document.getElementById('victory-modal');
-    const imageUpload = document.getElementById('image-upload');
-    const uploadError = document.getElementById('upload-error');
-    const startGameBtn = document.getElementById('start-game-btn');
-    const helpButton = document.getElementById('help-button');
-    const helpModal = document.getElementById('help-modal');
-    const modeInstruction = document.getElementById('mode-instruction');
-    const modeRadios = document.querySelectorAll('input[name="game-mode"]');
+class MemoryGame {
+    constructor() {
+        // Game elements
+        this.gameBoard = document.getElementById('game-board');
+        this.newGameBtn = document.getElementById('new-game-btn');
+        this.uploadBtn = document.getElementById('upload-btn');
+        this.helpBtn = document.getElementById('help-btn');
+        this.scoreElement = document.getElementById('score-value');
+        this.victoryMessage = document.getElementById('victory-message');
 
-    // Close buttons
-    const closeButtons = document.querySelectorAll('.close');
+        // Modal elements
+        this.modeModal = document.getElementById('mode-modal');
+        this.helpModal = document.getElementById('help-modal');
+        this.closeModalBtns = document.querySelectorAll('.close-modal');
+        this.imageUpload = document.getElementById('image-upload');
+        this.startGameBtn = document.getElementById('start-game-btn');
+        this.modeInstructions = document.getElementById('mode-instructions');
+        this.errorMessage = document.getElementById('error-message');
+        this.fileNameDisplay = document.getElementById('file-name-display');
+        this.modeRadios = document.querySelectorAll('input[name="game-mode"]');
 
-    // Game state
-    let cards = [];
-    let flippedCards = [];
-    let matchedPairs = 0;
-    let score = 0;
-    let gameMode = 'identical'; // default mode
-    let customImages = [];
-    let isProcessing = false;
+        // Game state
+        this.cards = [];
+        this.flippedCards = [];
+        this.matchedPairs = 0;
+        this.score = 0;
+        this.isLocked = false;
+        this.gameMode = 'identical'; // Default mode
+        this.customImages = [];
 
-    // Default images (8 pairs)
-    const defaultImages = [
-        'img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg',
-        'img/5.jpg', 'img/6.jpg', 'img/7.jpg', 'img/8.jpg'
-    ];
+        // Default images
+        this.defaultImages = [
+            'img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg',
+            'img/5.jpg', 'img/6.jpg', 'img/7.jpg', 'img/8.jpg'
+        ];
 
-    // Initialize game with default images
-    initGame(defaultImages);
+        this.setupEventListeners();
+        this.startNewGame();
+    }
 
-    // Event listeners
-    newGameBtn.addEventListener('click', () => {
-        resetGame();
-        if (customImages.length > 0) {
-            createGameCards(customImages);
-        } else {
-            initGame(defaultImages);
-        }
-    });
+    setupEventListeners() {
+        // Game control buttons
+        this.newGameBtn.addEventListener('click', () => this.startNewGame());
+        this.uploadBtn.addEventListener('click', () => this.openModeModal());
+        this.helpBtn.addEventListener('click', () => this.openHelpModal());
 
-    uploadImagesBtn.addEventListener('click', () => {
-        modeSelectModal.style.display = 'block';
-        uploadError.style.display = 'none';
-        updateModeInstructions();
-    });
+        // Modal control
+        this.closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', () => this.closeAllModals());
+        });
 
-    modeRadios.forEach(radio => {
-        radio.addEventListener('change', updateModeInstructions);
-    });
+        // Mode selection and file upload
+        this.modeRadios.forEach(radio => {
+            radio.addEventListener('change', () => this.updateModeInstructions());
+        });
 
-    function updateModeInstructions() {
+        this.imageUpload.addEventListener('change', (e) => this.handleFileSelection(e));
+        this.startGameBtn.addEventListener('click', () => this.validateAndStartGame());
+
+        // Close modals if clicked outside
+        window.addEventListener('click', (e) => {
+            if (e.target === this.modeModal) {
+                this.closeAllModals();
+            }
+            if (e.target === this.helpModal) {
+                this.closeAllModals();
+            }
+        });
+    }
+
+    openModeModal() {
+        this.modeModal.classList.remove('hidden');
+        this.updateModeInstructions();
+        this.resetModalInputs();
+    }
+
+    openHelpModal() {
+        this.helpModal.classList.remove('hidden');
+    }
+
+    closeAllModals() {
+        this.modeModal.classList.add('hidden');
+        this.helpModal.classList.add('hidden');
+    }
+
+    resetModalInputs() {
+        this.imageUpload.value = '';
+        this.fileNameDisplay.textContent = 'לא נבחרו קבצים';
+        this.errorMessage.classList.add('hidden');
+        this.errorMessage.textContent = '';
+        this.customImages = [];
+    }
+
+    updateModeInstructions() {
         const selectedMode = document.querySelector('input[name="game-mode"]:checked').value;
+        this.gameMode = selectedMode;
+
         switch (selectedMode) {
             case 'identical':
-                modeInstruction.textContent = 'יש להעלות 8 תמונות';
+                this.modeInstructions.textContent = 'יש להעלות 8 תמונות';
                 break;
             case 'different':
-                modeInstruction.textContent = 'יש להעלות 16 תמונות, עם הסיומות \'1\' ו\'2\'';
+                this.modeInstructions.textContent = 'יש להעלות 16 תמונות, עם הסיומות \'1\' ו\'2\'';
                 break;
             case 'text':
-                modeInstruction.textContent = 'יש להעלות 8 תמונות, שם הקובץ ישמש כטקסט לכרטיס המתאים';
+                this.modeInstructions.textContent = 'יש להעלות 8 תמונות, שם הקובץ ישמש כטקסט לכרטיס המתאים';
                 break;
         }
     }
 
-    startGameBtn.addEventListener('click', () => {
-        const selectedMode = document.querySelector('input[name="game-mode"]:checked').value;
-        gameMode = selectedMode;
-
-        if (!validateUploadedImages()) {
-            return; // Error message is displayed by validateUploadedImages
+    handleFileSelection(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) {
+            this.fileNameDisplay.textContent = 'לא נבחרו קבצים';
+            return;
         }
 
-        modeSelectModal.style.display = 'none';
-        resetGame();
-        createGameCards(customImages);
-    });
+        this.fileNameDisplay.textContent = `נבחרו ${files.length} קבצים`;
+        this.errorMessage.classList.add('hidden');
+    }
 
-    imageUpload.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        customImages = [];
-        uploadError.style.display = 'none';
+    async validateAndStartGame() {
+        const files = Array.from(this.imageUpload.files);
+        if (files.length === 0) {
+            this.showError('יש לבחור תמונות');
+            return;
+        }
 
-        if (files.length === 0) return;
-
-        // Clear previous error
-        uploadError.textContent = '';
-        uploadError.style.display = 'none';
-
-        // Process files based on mode
-        const selectedMode = document.querySelector('input[name="game-mode"]:checked').value;
-
-        switch (selectedMode) {
+        // Validate based on game mode
+        switch (this.gameMode) {
             case 'identical':
                 if (files.length !== 8) {
-                    uploadError.textContent = 'יש להעלות בדיוק 8 תמונות למצב זה';
-                    uploadError.style.display = 'block';
+                    this.showError('יש להעלות בדיוק 8 תמונות למצב זה');
                     return;
                 }
                 break;
 
             case 'different':
                 if (files.length !== 16) {
-                    uploadError.textContent = 'יש להעלות בדיוק 16 תמונות למצב זה';
-                    uploadError.style.display = 'block';
+                    this.showError('יש להעלות בדיוק 16 תמונות למצב זה');
                     return;
                 }
-                break;
 
-            case 'text':
-                if (files.length !== 8) {
-                    uploadError.textContent = 'יש להעלות בדיוק 8 תמונות למצב זה';
-                    uploadError.style.display = 'block';
-                    return;
-                }
-                break;
-        }
-
-        // Process each file to create URL
-        for (const file of files) {
-            const imageUrl = URL.createObjectURL(file);
-            customImages.push({
-                url: imageUrl,
-                name: file.name
-            });
-        }
-    });
-
-    helpButton.addEventListener('click', () => {
-        helpModal.style.display = 'block';
-    });
-
-    // Close button functionality
-    closeButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            modal.style.display = 'none';
-        });
-    });
-
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === modeSelectModal) {
-            modeSelectModal.style.display = 'none';
-        }
-        if (e.target === helpModal) {
-            helpModal.style.display = 'none';
-        }
-    });
-
-    document.getElementById('victory-new-game').addEventListener('click', () => {
-        victoryModal.style.display = 'none';
-        resetGame();
-        if (customImages.length > 0) {
-            createGameCards(customImages);
-        } else {
-            initGame(defaultImages);
-        }
-    });
-
-    // Game Functions
-    function initGame(images) {
-        gameMode = 'identical'; // Reset to default mode for default images
-        const gameImages = [...images, ...images]; // Duplicate for pairs
-        shuffleArray(gameImages);
-        createDefaultCards(gameImages);
-    }
-
-    function validateUploadedImages() {
-        if (customImages.length === 0) {
-            uploadError.textContent = 'יש להעלות תמונות כדי להתחיל משחק';
-            uploadError.style.display = 'block';
-            return false;
-        }
-
-        // Validate based on game mode
-        switch (gameMode) {
-            case 'identical':
-                if (customImages.length !== 8) {
-                    uploadError.textContent = 'יש להעלות בדיוק 8 תמונות למצב זה';
-                    uploadError.style.display = 'block';
-                    return false;
-                }
-                break;
-
-            case 'different':
-                if (customImages.length !== 16) {
-                    uploadError.textContent = 'יש להעלות בדיוק 16 תמונות למצב זה';
-                    uploadError.style.display = 'block';
-                    return false;
-                }
-
-                // Check pairs naming convention
+                // Verify naming convention
                 const baseNames = new Set();
                 const pairMap = {};
 
-                for (const image of customImages) {
-                    const filename = image.name.split('.')[0];
+                for (const file of files) {
+                    const filename = file.name.split('.')[0]; // Remove extension
                     if (!filename.endsWith('1') && !filename.endsWith('2')) {
-                        uploadError.textContent = 'שמות התמונות חייבים להסתיים ב-\'1\' או \'2\', לדוגמה: \'זברה1.jpg\' ו-\'זברה2.jpg\'';
-                        uploadError.style.display = 'block';
-                        return false;
+                        this.showError('שמות התמונות חייבים להסתיים ב-\'1\' או \'2\', לדוגמה: \'זברה1.jpg\' ו-\'זברה2.jpg\'');
+                        return;
                     }
 
                     const baseName = filename.slice(0, -1); // Remove the last character (1 or 2)
@@ -216,323 +158,334 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!pairMap[baseName]) {
                         pairMap[baseName] = [];
                     }
-                    pairMap[baseName].push(image);
+                    pairMap[baseName].push(file);
                 }
 
                 // Check if we have exactly 8 pairs
                 if (baseNames.size !== 8) {
-                    uploadError.textContent = 'יש להעלות בדיוק 8 זוגות של תמונות (16 תמונות בסך הכל)';
-                    uploadError.style.display = 'block';
-                    return false;
+                    this.showError('יש להעלות בדיוק 8 זוגות של תמונות (16 תמונות בסך הכל)');
+                    return;
                 }
 
                 // Check if each base name has exactly 2 files
                 for (const baseName of baseNames) {
                     if (pairMap[baseName].length !== 2) {
-                        uploadError.textContent = `לא נמצאו 2 תמונות לבסיס השם '${baseName}'`;
-                        uploadError.style.display = 'block';
-                        return false;
+                        this.showError(`לא נמצאו 2 תמונות לבסיס השם '${baseName}'`);
+                        return;
                     }
 
                     // Check if we have both '1' and '2' suffixes
-                    const suffixes = pairMap[baseName].map(img => img.name.split('.')[0].slice(-1));
+                    const suffixes = pairMap[baseName].map(file => file.name.split('.')[0].slice(-1));
                     if (!suffixes.includes('1') || !suffixes.includes('2')) {
-                        uploadError.textContent = `לבסיס השם '${baseName}' חסרה תמונה עם סיומת '1' או '2'`;
-                        uploadError.style.display = 'block';
-                        return false;
+                        this.showError(`לבסיס השם '${baseName}' חסרה תמונה עם סיומת '1' או '2'`);
+                        return;
                     }
                 }
                 break;
 
             case 'text':
-                if (customImages.length !== 8) {
-                    uploadError.textContent = 'יש להעלות בדיוק 8 תמונות למצב זה';
-                    uploadError.style.display = 'block';
-                    return false;
+                if (files.length !== 8) {
+                    this.showError('יש להעלות בדיוק 8 תמונות למצב זה');
+                    return;
                 }
                 break;
         }
 
-        return true;
+        // Process images
+        this.customImages = await this.processFiles(files);
+        this.closeAllModals();
+        this.startNewGameWithMode();
     }
 
-    function createDefaultCards(images) {
-        gameBoard.innerHTML = '';
-        cards = [];
+    showError(message) {
+        this.errorMessage.textContent = message;
+        this.errorMessage.classList.remove('hidden');
+    }
 
-        images.forEach((image, index) => {
-            const card = document.createElement('div');
-            card.classList.add('card');
-            card.dataset.id = index;
-            card.dataset.image = image;
+    async processFiles(files) {
+        const processedFiles = [];
 
-            // Create card front
-            const cardFront = document.createElement('div');
-            cardFront.classList.add('card-front');
-            cardFront.textContent = 'מיתרים ונהנים';
+        // Process each file to get URL and name
+        for (const file of files) {
+            const imageUrl = await this.readFileAsDataURL(file);
+            processedFiles.push({
+                url: imageUrl,
+                name: file.name
+            });
+        }
 
-            // Create card back
-            const cardBack = document.createElement('div');
-            cardBack.classList.add('card-back');
+        return processedFiles;
+    }
 
-            const img = document.createElement('img');
-            img.src = image;
-            cardBack.appendChild(img);
-
-            // Append elements
-            card.appendChild(cardFront);
-            card.appendChild(cardBack);
-            gameBoard.appendChild(card);
-
-            // Add click event
-            card.addEventListener('click', flipCard);
-            cards.push(card);
+    readFileAsDataURL(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
         });
     }
 
-    function createGameCards(images) {
-        gameBoard.innerHTML = '';
-        cards = [];
+    startNewGame() {
+        this.resetGame();
+        const defaultImageUrls = this.defaultImages;
+        const duplicatedImages = [...defaultImageUrls, ...defaultImageUrls];
+        this.shuffleArray(duplicatedImages);
+        this.createCards(duplicatedImages, 'identical');
+    }
 
-        switch (gameMode) {
+    startNewGameWithMode() {
+        this.resetGame();
+
+        switch (this.gameMode) {
             case 'identical':
-                // Duplicate and shuffle images
-                let gameDeck = [];
-                images.forEach(image => {
-                    gameDeck.push(image, image);
-                });
-                shuffleArray(gameDeck);
-
-                // Create cards
-                gameDeck.forEach((image, index) => {
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-                    card.dataset.id = index;
-                    card.dataset.pairId = images.indexOf(image);
-
-                    // Create card front
-                    const cardFront = document.createElement('div');
-                    cardFront.classList.add('card-front');
-                    cardFront.textContent = 'מיתרים ונהנים';
-
-                    // Create card back
-                    const cardBack = document.createElement('div');
-                    cardBack.classList.add('card-back');
-
-                    const img = document.createElement('img');
-                    img.src = image.url;
-                    cardBack.appendChild(img);
-
-                    // Append elements
-                    card.appendChild(cardFront);
-                    card.appendChild(cardBack);
-                    gameBoard.appendChild(card);
-
-                    // Add click event
-                    card.addEventListener('click', flipCard);
-                    cards.push(card);
-                });
+                this.createIdenticalCards(this.customImages);
                 break;
 
             case 'different':
-                // Group images by base name
-                const pairGroups = {};
-                images.forEach(image => {
-                    const filename = image.name.split('.')[0]; // Remove extension
-                    const baseName = filename.slice(0, -1); // Remove the last character (1 or 2)
-
-                    if (!pairGroups[baseName]) {
-                        pairGroups[baseName] = [];
-                    }
-                    pairGroups[baseName].push(image);
-                });
-
-                // Create an array of pairs
-                let gameDeck = [];
-                Object.values(pairGroups).forEach((pair, pairId) => {
-                    pair.forEach(image => {
-                        gameDeck.push({
-                            image: image,
-                            pairId: pairId
-                        });
-                    });
-                });
-
-                shuffleArray(gameDeck);
-
-                // Create cards
-                gameDeck.forEach((item, index) => {
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-                    card.dataset.id = index;
-                    card.dataset.pairId = item.pairId;
-
-                    // Create card front
-                    const cardFront = document.createElement('div');
-                    cardFront.classList.add('card-front');
-                    cardFront.textContent = 'מיתרים ונהנים';
-
-                    // Create card back
-                    const cardBack = document.createElement('div');
-                    cardBack.classList.add('card-back');
-
-                    const img = document.createElement('img');
-                    img.src = item.image.url;
-                    cardBack.appendChild(img);
-
-                    // Append elements
-                    card.appendChild(cardFront);
-                    card.appendChild(cardBack);
-                    gameBoard.appendChild(card);
-
-                    // Add click event
-                    card.addEventListener('click', flipCard);
-                    cards.push(card);
-                });
+                this.createDifferentCards(this.customImages);
                 break;
 
             case 'text':
-                let textGameDeck = [];
-
-                // Create image cards and text cards
-                images.forEach((image, index) => {
-                    // Get file name without extension for text
-                    const fileNameWithExt = image.name;
-                    const fileName = fileNameWithExt.substring(0, fileNameWithExt.lastIndexOf('.')) || fileNameWithExt;
-
-                    // Add image card
-                    textGameDeck.push({
-                        type: 'image',
-                        content: image.url,
-                        pairId: index
-                    });
-
-                    // Add text card
-                    textGameDeck.push({
-                        type: 'text',
-                        content: fileName,
-                        pairId: index
-                    });
-                });
-
-                shuffleArray(textGameDeck);
-
-                // Create cards
-                textGameDeck.forEach((item, index) => {
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-                    card.dataset.id = index;
-                    card.dataset.pairId = item.pairId;
-
-                    // Create card front
-                    const cardFront = document.createElement('div');
-                    cardFront.classList.add('card-front');
-                    cardFront.textContent = 'מיתרים ונהנים';
-
-                    // Create card back
-                    const cardBack = document.createElement('div');
-                    cardBack.classList.add('card-back');
-
-                    if (item.type === 'image') {
-                        const img = document.createElement('img');
-                        img.src = item.content;
-                        cardBack.appendChild(img);
-                    } else {
-                        const textDiv = document.createElement('div');
-                        textDiv.classList.add('text-content');
-                        textDiv.textContent = item.content;
-                        cardBack.appendChild(textDiv);
-                    }
-
-                    // Append elements
-                    card.appendChild(cardFront);
-                    card.appendChild(cardBack);
-                    gameBoard.appendChild(card);
-
-                    // Add click event
-                    card.addEventListener('click', flipCard);
-                    cards.push(card);
-                });
+                this.createTextCards(this.customImages);
                 break;
         }
     }
 
-    function flipCard() {
-        if (isProcessing) return;
-        if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
-        if (flippedCards.length >= 2) return;
-
-        this.classList.add('flipped');
-        flippedCards.push(this);
-
-        if (flippedCards.length === 2) {
-            isProcessing = true;
-            setTimeout(checkForMatch, 1000);
-        }
+    resetGame() {
+        this.gameBoard.innerHTML = '';
+        this.cards = [];
+        this.flippedCards = [];
+        this.matchedPairs = 0;
+        this.score = 0;
+        this.scoreElement.textContent = '0';
+        this.isLocked = false;
+        this.victoryMessage.classList.add('hidden');
     }
 
-    function checkForMatch() {
-        const [card1, card2] = flippedCards;
-
-        // In identical mode, compare image URLs
-        // In different and text modes, compare pairId
-        let isMatch = false;
-
-        if (gameMode === 'identical' && card1.dataset.image === card2.dataset.image) {
-            isMatch = true;
-        } else if ((gameMode === 'different' || gameMode === 'text') &&
-                   card1.dataset.pairId === card2.dataset.pairId) {
-            isMatch = true;
-        }
-
-        if (isMatch) {
-            // It's a match
-            card1.classList.add('matched');
-            card2.classList.add('matched');
-            flippedCards = [];
-            matchedPairs++;
-
-            // Update score - more points for finding matches quicker
-            score += 10;
-            scoreElement.textContent = score;
-
-            // Check for victory
-            if (matchedPairs === 8) { // 8 pairs in the game
-                finalScoreElement.textContent = score;
-                setTimeout(() => {
-                    victoryModal.style.display = 'block';
-                }, 500);
-            }
-        } else {
-            // Not a match, flip cards back
-            setTimeout(() => {
-                card1.classList.remove('flipped');
-                card2.classList.remove('flipped');
-                flippedCards = [];
-            }, 500);
-
-            // Reduce score on mistake, but not below zero
-            score = Math.max(0, score - 1);
-            scoreElement.textContent = score;
-        }
-
-        isProcessing = false;
-    }
-
-    function resetGame() {
-        gameBoard.innerHTML = '';
-        cards = [];
-        flippedCards = [];
-        matchedPairs = 0;
-        score = 0;
-        scoreElement.textContent = score;
-    }
-
-    function shuffleArray(array) {
+    shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
     }
+
+    createCards(images, mode = 'identical') {
+        images.forEach((image, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const front = document.createElement('div');
+            front.className = 'front';
+            front.textContent = 'מיתרים ונהנים';
+
+            const back = document.createElement('div');
+            back.className = 'back';
+
+            // For default mode or when providing direct image URLs
+            if (typeof image === 'string') {
+                const img = document.createElement('img');
+                img.src = image;
+                img.alt = `Card ${index + 1}`;
+                back.appendChild(img);
+
+                card.dataset.pairId = images.indexOf(image) % (images.length / 2);
+            }
+
+            card.appendChild(front);
+            card.appendChild(back);
+            this.gameBoard.appendChild(card);
+
+            card.addEventListener('click', () => this.flipCard(card));
+            this.cards.push(card);
+        });
+    }
+
+    createIdenticalCards(images) {
+        // Duplicate images for pairs
+        const cardData = [];
+        images.forEach((image, index) => {
+            cardData.push({
+                type: 'image',
+                content: image.url,
+                pairId: index
+            });
+            cardData.push({
+                type: 'image',
+                content: image.url,
+                pairId: index
+            });
+        });
+
+        this.shuffleArray(cardData);
+        this.createCustomCards(cardData);
+    }
+
+    createDifferentCards(images) {
+        // Group images by base name
+        const pairs = {};
+
+        images.forEach(image => {
+            const filename = image.name.split('.')[0];
+            const baseName = filename.slice(0, -1);
+            const suffix = filename.slice(-1);
+
+            if (!pairs[baseName]) {
+                pairs[baseName] = {};
+            }
+
+            pairs[baseName][suffix] = image;
+        });
+
+        // Create card data with pair IDs
+        const cardData = [];
+        let pairId = 0;
+
+        for (const baseName in pairs) {
+            cardData.push({
+                type: 'image',
+                content: pairs[baseName]['1'].url,
+                pairId: pairId
+            });
+
+            cardData.push({
+                type: 'image',
+                content: pairs[baseName]['2'].url,
+                pairId: pairId
+            });
+
+            pairId++;
+        }
+
+        this.shuffleArray(cardData);
+        this.createCustomCards(cardData);
+    }
+
+    createTextCards(images) {
+        const cardData = [];
+
+        images.forEach((image, index) => {
+            // Get file name without extension for text
+            const fileNameWithExt = image.name;
+            const fileName = fileNameWithExt.substring(0, fileNameWithExt.lastIndexOf('.')) || fileNameWithExt;
+
+            // Add image card
+            cardData.push({
+                type: 'image',
+                content: image.url,
+                pairId: index
+            });
+
+            // Add text card
+            cardData.push({
+                type: 'text',
+                content: fileName,
+                pairId: index
+            });
+        });
+
+        this.shuffleArray(cardData);
+        this.createCustomCards(cardData);
+    }
+
+    createCustomCards(cardData) {
+        cardData.forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.pairId = data.pairId;
+
+            const front = document.createElement('div');
+            front.className = 'front';
+            front.textContent = 'מיתרים ונהנים';
+
+            const back = document.createElement('div');
+            back.className = 'back';
+
+            if (data.type === 'image') {
+                const img = document.createElement('img');
+                img.src = data.content;
+                img.alt = `Card ${index + 1}`;
+                back.appendChild(img);
+            } else if (data.type === 'text') {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'text-content';
+                textDiv.textContent = data.content;
+                back.appendChild(textDiv);
+            }
+
+            card.appendChild(front);
+            card.appendChild(back);
+            this.gameBoard.appendChild(card);
+
+            card.addEventListener('click', () => this.flipCard(card));
+            this.cards.push(card);
+        });
+    }
+
+    flipCard(card) {
+        if (this.isLocked) return;
+        if (card.classList.contains('flipped')) return;
+        if (card.classList.contains('matched')) return;
+        if (this.flippedCards.length >= 2) return;
+
+        card.classList.add('flipped');
+        this.flippedCards.push(card);
+
+        if (this.flippedCards.length === 2) {
+            this.isLocked = true;
+            setTimeout(() => this.checkMatch(), 1000);
+        }
+    }
+
+    checkMatch() {
+        const [card1, card2] = this.flippedCards;
+        const isMatch = card1.dataset.pairId === card2.dataset.pairId;
+
+        if (isMatch) {
+            this.handleMatch(card1, card2);
+        } else {
+            this.handleMismatch(card1, card2);
+        }
+    }
+
+    handleMatch(card1, card2) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        this.matchedPairs++;
+
+        // Update score
+        this.score += 10;
+        this.scoreElement.textContent = this.score;
+
+        this.flippedCards = [];
+        this.isLocked = false;
+
+        // Check for victory
+        if (this.matchedPairs === this.cards.length / 2) {
+            setTimeout(() => this.showVictory(), 500);
+        }
+    }
+
+    handleMismatch(card1, card2) {
+        setTimeout(() => {
+            card1.classList.remove('flipped');
+            card2.classList.remove('flipped');
+
+            this.flippedCards = [];
+            this.isLocked = false;
+        }, 500);
+
+        // Reduce score for mistakes, but not below zero
+        this.score = Math.max(0, this.score - 1);
+        this.scoreElement.textContent = this.score;
+    }
+
+    showVictory() {
+        this.victoryMessage.classList.remove('hidden');
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new MemoryGame();
 });
