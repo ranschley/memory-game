@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק הזיכרון של בית ספר מיתרים</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f8ff;
+            direction: rtl;
+            text-align: center;
+        }
+        h1 {
+            color: #4169e1;
+            margin-bottom: 20px;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .score {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4169e1;
+        }
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+        .card {
+            height: 150px;
+            background-color: #4169e1;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            font-size: 1em;
+            transition: transform 0.3s;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card-front {
+            background-color: #4169e1;
+            color: white;
+            transform: rotateY(0deg);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: white;
+        }
+        .card-back img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        .card-back div.text-card {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4169e1;
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        .matched {
+            background-color: #90ee90;
+            cursor: default;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4169e1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #3a5fcd;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .popup {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 80%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #333;
+        }
+        .mode-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .mode-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .file-input {
+            display: none;
+        }
+        .victory {
+            font-size: 2em;
+            color: #4169e1;
+            font-weight: bold;
+            margin-top: 20px;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .card {
+                height: 120px;
+            }
+        }
+        @media (max-width: 480px) {
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .card {
+                height: 100px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>משחק הזיכרון של בית ספר מיתרים</h1>
+        <div class="game-info">
+            <div class="score">ניקוד: <span id="score">0</span></div>
+        </div>
+        <div class="controls">
+            <button id="new-game-btn">משחק חדש</button>
+            <button id="upload-btn">העלה תמונות...</button>
+            <button id="help-btn">עזרה</button>
+        </div>
+        <div class="cards-container" id="cards-container"></div>
+        <div id="victory-message"></div>
+    </div>
+
+    <!-- Help Overlay -->
+    <div class="overlay" id="help-overlay">
+        <div class="popup">
+            <button class="close-btn" id="close-help-btn">×</button>
+            <h2>עזרה</h2>
+            <p>למשחק שלוש מצבים:</p>
+            <p>1. מצב התאמת שתי תמונות זהות - יש להעלות 8 תמונות.</p>
+            <p>2. מצב התאמת שתי תמונות שונות - יש להעלות 16 תמונות, עם הסיומות '1' ו'2'. למשל התמונות 'זברה1' ו'זברה2' יותאמו זו לזו.</p>
+            <p>3. מצב התאמת תמונה לטקסט - יש להעלות 8 תמונות. התמונה תותאם לשם הקובץ, למשל, התמונה 'זברה' תותאם לכרטיס עם הטקסט 'זברה'.</p>
+            <p>מומלץ להעלות תמונות ריבועיות, בפורמט jpg</p>
+        </div>
+    </div>
+
+    <!-- Mode Selection Overlay -->
+    <div class="overlay" id="mode-overlay">
+        <div class="popup">
+            <button class="close-btn" id="close-mode-btn">×</button>
+            <h2>בחר מצב משחק</h2>
+            <div class="mode-selection">
+                <div class="mode-option">
+                    <input type="radio" id="mode-1" name="game-mode" value="1" checked>
+                    <label for="mode-1">התאמת שתי תמונות זהות</label>
+                </div>
+                <div class="mode-option">
+                    <input type="radio" id="mode-2" name="game-mode" value="2">
+                    <label for="mode-2">התאמת שתי תמונות שונות</label>
+                </div>
+                <div class="mode-option">
+                    <input type="radio" id="mode-3" name="game-mode" value="3">
+                    <label for="mode-3">התאמת תמונה וטקסט</label>
+                </div>
+            </div>
+            <button id="select-files-btn">בחר קבצים</button>
+            <p id="mode-error" style="color: red; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- Error Overlay -->
+    <div class="overlay" id="error-overlay">
+        <div class="popup">
+            <button class="close-btn" id="close-error-btn">×</button>
+            <h2>שגיאה</h2>
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" multiple class="file-input">
+
+    <script>
+        // Game variables
+        let cards = [];
+        let hasFlippedCard = false;
+        let firstCard, secondCard;
+        let lockBoard = false;
+        let score = 0;
+        let matchedPairs = 0;
+        let gameMode = 1; // Default: regular memory game
+        let pairsCount = 8; // Default: 8 pairs (16 cards)
+        let defaultImages = [
+            'img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg',
+            'img/5.jpg', 'img/6.jpg', 'img/7.jpg', 'img/8.jpg'
+        ];
+
+        // DOM elements
+        const cardsContainer = document.getElementById('cards-container');
+        const scoreElement = document.getElementById('score');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const fileInput = document.getElementById('file-input');
+        const victoryMessage = document.getElementById('victory-message');
+
+        // Overlays
+        const helpOverlay = document.getElementById('help-overlay');
+        const modeOverlay = document.getElementById('mode-overlay');
+        const errorOverlay = document.getElementById('error-overlay');
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        const closeModeBtn = document.getElementById('close-mode-btn');
+        const closeErrorBtn = document.getElementById('close-error-btn');
+        const selectFilesBtn = document.getElementById('select-files-btn');
+        const errorMessageElement = document.getElementById('error-message');
+        const modeErrorElement = document.getElementById('mode-error');
+
+        // Initialize game
+        function initGame() {
+            resetGame();
+            createCards(generateDefaultCardData());
+        }
+
+        // Reset game state
+        function resetGame() {
+            cards = [];
+            hasFlippedCard = false;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            score = 0;
+            matchedPairs = 0;
+            scoreElement.textContent = score;
+            victoryMessage.innerHTML = '';
+            cardsContainer.innerHTML = '';
+        }
+
+        // Create cards based on provided data
+        function createCards(cardData) {
+            cardData.forEach((data, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.index = index;
+
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('card-front');
+                cardFront.textContent = 'מיתרים ונהנים';
+
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('card-back');
+
+                if (data.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = data.content;
+                    img.alt = "Card Image";
+                    cardBack.appendChild(img);
+                } else if (data.type === 'text') {
+                    const textDiv = document.createElement('div');
+                    textDiv.classList.add('text-card');
+                    textDiv.textContent = data.content;
+                    cardBack.appendChild(textDiv);
+                }
+
+                card.appendChild(cardFront);
+                card.appendChild(cardBack);
+                card.dataset.cardId = data.id;
+                
+                card.addEventListener('click', flipCard);
+                cardsContainer.appendChild(card);
+                cards.push(card);
+            });
+        }
+
+        // Flip card function
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+            if (this.classList.contains('matched')) return;
+
+            this.classList.add('flipped');
+
+            if (!hasFlippedCard) {
+                // First card flipped
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            // Second card flipped
+            secondCard = this;
+            checkForMatch();
+        }
+
+        // Check if the two flipped cards match
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.cardId === secondCard.dataset.cardId;
+
+            if (isMatch) {
+                disableCards();
+                updateScore(10); // Increase score by 10 for a match
+                matchedPairs++;
+                
+                // Check for game completion
+                if (matchedPairs === pairsCount) {
+                    setTimeout(() => {
+                        showVictory();
+                    }, 500);
+                }
+            } else {
+                unflipCards();
+                updateScore(-2); // Decrease score by 2 for a wrong attempt
+            }
+        }
+
+        // Update score
+        function updateScore(points) {
+            score += points;
+            scoreElement.textContent = score;
+        }
+
+        // Disable matched cards
+        function disableCards() {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            
+            resetBoard();
+        }
+
+        // Unflip non-matching cards
+        function unflipCards() {
+            lockBoard = true;
+
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                resetBoard();
+            }, 1000);
+        }
+
+        // Reset board after a turn
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // Shuffle the cards (Fisher-Yates algorithm)
+        function shuffle(array) {
+            let currentIndex = array.length;
+            let randomIndex;
+
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+
+            return array;
+        }
+
+        // Show victory message
+        function showVictory() {
+            victoryMessage.innerHTML = `<div class="victory">ניצחון! סיימת עם ${score} נקודות</div>`;
+        }
+
+        // Generate default card data (using the predefined images)
+        function generateDefaultCardData() {
+            let cardData = [];
+            
+            defaultImages.forEach((img, index) => {
+                // Create two cards with the same ID (for matching)
+                cardData.push({
+                    id: `pair-${index}`,
+                    type: 'image',
+                    content: img
+                });
+                
+                cardData.push({
+                    id: `pair-${index}`,
+                    type: 'image',
+                    content: img
+                });
+            });
+            
+            return shuffle(cardData);
+        }
+
+        // Process uploaded files based on game mode
+        function processUploadedFiles(files) {
+            resetGame();
+            
+            if (gameMode === 1) {
+                // Regular memory game: match identical images
+                if (files.length < 8) {
+                    showError("יש להעלות לפחות 8 תמונות למצב זה");
+                    return;
+                }
+                
+                const selectedFiles = Array.from(files).slice(0, 8);
+                const cardData = [];
+                
+                selectedFiles.forEach((file, index) => {
+                    const imageUrl = URL.createObjectURL(file);
+                    
+                    // Create two cards with the same ID and image
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'image',
+                        content: imageUrl
+                    });
+                    
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'image',
+                        content: imageUrl
+                    });
+                });
+                
+                pairsCount = selectedFiles.length;
+                createCards(shuffle(cardData));
+                
+            } else if (gameMode === 2) {
+                // Match different images: pair images with '1' and '2' suffix
+                if (files.length < 16) {
+                    showError("יש להעלות לפחות 16 תמונות למצב זה");
+                    return;
+                }
+                
+                const fileMap = new Map();
+                let validPairs = true;
+                
+                // Organize files by base name
+                Array.from(files).forEach(file => {
+                    const fileName = file.name.split('.')[0]; // Get name without extension
+                    
+                    // Check if filename ends with 1 or 2
+                    if (fileName.endsWith('1') || fileName.endsWith('2')) {
+                        const baseName = fileName.substring(0, fileName.length - 1);
+                        
+                        if (!fileMap.has(baseName)) {
+                            fileMap.set(baseName, []);
+                        }
+                        
+                        fileMap.get(baseName).push({
+                            suffix: fileName.charAt(fileName.length - 1),
+                            file: file
+                        });
+                    } else {
+                        validPairs = false;
+                    }
+                });
+                
+                // Validate pairs
+                let validBaseNames = [];
+                for (const [baseName, fileInfos] of fileMap.entries()) {
+                    if (fileInfos.length === 2 && 
+                        fileInfos.some(info => info.suffix === '1') && 
+                        fileInfos.some(info => info.suffix === '2')) {
+                        validBaseNames.push(baseName);
+                    }
+                }
+                
+                if (!validPairs || validBaseNames.length < 8) {
+                    showError("יש להעלות לפחות 8 זוגות של תמונות, כל זוג עם הסיומות '1' ו-'2'");
+                    return;
+                }
+                
+                // Create card data
+                const cardData = [];
+                validBaseNames.slice(0, 8).forEach((baseName, index) => {
+                    const file1 = fileMap.get(baseName).find(info => info.suffix === '1').file;
+                    const file2 = fileMap.get(baseName).find(info => info.suffix === '2').file;
+                    
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'image',
+                        content: URL.createObjectURL(file1)
+                    });
+                    
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'image',
+                        content: URL.createObjectURL(file2)
+                    });
+                });
+                
+                pairsCount = validBaseNames.length;
+                createCards(shuffle(cardData));
+                
+            } else if (gameMode === 3) {
+                // Match image to text: pair image with its filename
+                if (files.length < 8) {
+                    showError("יש להעלות לפחות 8 תמונות למצב זה");
+                    return;
+                }
+                
+                const selectedFiles = Array.from(files).slice(0, 8);
+                const cardData = [];
+                
+                selectedFiles.forEach((file, index) => {
+                    const imageUrl = URL.createObjectURL(file);
+                    const fileName = file.name.split('.')[0]; // Get name without extension
+                    
+                    // Card with image
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'image',
+                        content: imageUrl
+                    });
+                    
+                    // Card with text
+                    cardData.push({
+                        id: `pair-${index}`,
+                        type: 'text',
+                        content: fileName
+                    });
+                });
+                
+                pairsCount = selectedFiles.length;
+                createCards(shuffle(cardData));
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessageElement.textContent = message;
+            errorOverlay.classList.add('active');
+        }
+
+        // Event listeners
+        newGameBtn.addEventListener('click', () => {
+            resetGame();
+            createCards(generateDefaultCardData());
+        });
+
+        uploadBtn.addEventListener('click', () => {
+            modeErrorElement.style.display = 'none';
+            modeOverlay.classList.add('active');
+        });
+
+        helpBtn.addEventListener('click', () => {
+            helpOverlay.classList.add('active');
+        });
+
+        closeHelpBtn.addEventListener('click', () => {
+            helpOverlay.classList.remove('active');
+        });
+
+        closeModeBtn.addEventListener('click', () => {
+            modeOverlay.classList.remove('active');
+        });
+
+        closeErrorBtn.addEventListener('click', () => {
+            errorOverlay.classList.remove('active');
+        });
+
+        selectFilesBtn.addEventListener('click', () => {
+            const modeRadios = document.getElementsByName('game-mode');
+            for (const radio of modeRadios) {
+                if (radio.checked) {
+                    gameMode = parseInt(radio.value);
+                    break;
+                }
+            }
+            
+            fileInput.click();
+            modeOverlay.classList.remove('active');
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                processUploadedFiles(event.target.files);
+            }
+        });
+
+        // Initialize game on page load
+        initGame();
+    </script>
+</body>
+</html>
