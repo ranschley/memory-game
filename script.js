@@ -46,7 +46,11 @@ class MemoryGame {
 
         // Modal control
         this.closeModalBtns.forEach(btn => {
-            btn.addEventListener('click', () => this.closeAllModals());
+            console.log("Attaching event listener to:", btn); // Debugging
+            btn.addEventListener('click', (event) => {
+                console.log("Clicked close button:", event.target); // Debugging
+                event.target.closest('.modal').classList.add('hidden');
+            });
         });
 
         // Mode selection and file upload
@@ -227,11 +231,33 @@ class MemoryGame {
 
     startNewGame() {
         this.resetGame();
-        const defaultImageUrls = this.defaultImages;
-        const duplicatedImages = [...defaultImageUrls, ...defaultImageUrls];
-        this.shuffleArray(duplicatedImages);
-        this.createCards(duplicatedImages, 'identical');
+
+        let imagesToUse;
+
+        if (this.customImages.length > 0) {
+            imagesToUse = this.customImages; // Use uploaded images
+        } else {
+            imagesToUse = this.defaultImages.map((url, index) => ({
+                url: url,
+                pairId: index
+            }));
+        }
+
+        // Create pairs based on current game mode
+        switch (this.gameMode) {
+            case 'identical':
+                this.createIdenticalCards(imagesToUse);
+                break;
+            case 'different':
+                this.createDifferentCards(imagesToUse);
+                break;
+            case 'text':
+                this.createTextCards(imagesToUse);
+                break;
+        }
     }
+
+
 
     startNewGameWithMode() {
         this.resetGame();
@@ -270,36 +296,33 @@ class MemoryGame {
         return array;
     }
 
-    createCards(images, mode = 'identical') {
-        images.forEach((image, index) => {
+    createCards(images) {
+        images.forEach((imageObj, index) => {
             const card = document.createElement('div');
             card.className = 'card';
-
+            card.dataset.pairId = imageObj.pairId; // Use assigned pair ID
+    
             const front = document.createElement('div');
             front.className = 'front';
-            front.textContent = 'מיתרים ונהנים';
-
+            front.textContent = '?';
+    
             const back = document.createElement('div');
             back.className = 'back';
-
-            // For default mode or when providing direct image URLs
-            if (typeof image === 'string') {
-                const img = document.createElement('img');
-                img.src = image;
-                img.alt = `Card ${index + 1}`;
-                back.appendChild(img);
-
-                card.dataset.pairId = images.indexOf(image) % (images.length / 2);
-            }
-
+    
+            const img = document.createElement('img');
+            img.src = imageObj.url;
+            img.alt = `Card ${index + 1}`;
+            back.appendChild(img);
+    
             card.appendChild(front);
             card.appendChild(back);
             this.gameBoard.appendChild(card);
-
+    
             card.addEventListener('click', () => this.flipCard(card));
             this.cards.push(card);
         });
     }
+
 
     createIdenticalCards(images) {
         // Duplicate images for pairs
@@ -396,7 +419,7 @@ class MemoryGame {
 
             const front = document.createElement('div');
             front.className = 'front';
-            front.textContent = 'מיתרים ונהנים';
+            front.textContent = '?';
 
             const back = document.createElement('div');
             back.className = 'back';
